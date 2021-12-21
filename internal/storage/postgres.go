@@ -32,3 +32,19 @@ func (p *postgres) TestConnection() {
 	}
 	fmt.Println("Connection to the database has been established.")
 }
+
+func (p *postgres) CloseConnection() {
+	p.db.Close()
+}
+
+func (p *postgres) NewBooksStorage() *books {
+	return &books{
+		db: p.db,
+	}
+}
+
+func (p *postgres) NewUsersStorage() *users {
+	return &users{
+		db: p.db,
+	}
+}
