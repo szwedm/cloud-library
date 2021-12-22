@@ -1,5 +1,7 @@
 package model
 
+import "github.com/szwedm/cloud-library/internal/dbmodel"
+
 type Book struct {
 	Id      string `json:"id"`
 	Title   string `json:"title"`
@@ -17,4 +19,24 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password,omitempty"`
 	Role     string `json:"role"`
+}
+
+func BookFromDTO(dto dbmodel.BookDTO) (b Book) {
+	b = Book{
+		Id:      dto.Id,
+		Title:   dto.Title,
+		Author:  dto.Author,
+		Subject: dto.Subject,
+	}
+	return
+}
+
+func UserFromDTO(dto dbmodel.UserDTO) (u User) {
+	u = User{
+		Id:       dto.Id,
+		Username: dto.Username,
+		Password: dto.Password,
+		Role:     dto.Role,
+	}
+	return
 }
