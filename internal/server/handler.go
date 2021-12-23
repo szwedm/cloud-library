@@ -183,3 +183,155 @@ func (h *booksHandler) deleteBookByID(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, body)
 }
+
+func (h *usersHandler) getUsers(w http.ResponseWriter, r *http.Request) {
+	dtos, err := h.storage.GetUsers()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	users := make([]model.User, 0)
+	for _, dto := range dtos {
+		users = append(users, model.UserFromDTO(dto))
+	}
+
+	body, err := json.Marshal(users)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, body)
+}
+
+func (h *usersHandler) getUserByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if vars["id"] == "" {
+		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
+		return
+	}
+
+	dto, err := h.storage.GetUserByID(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	user := model.UserFromDTO(dto)
+
+	body, err := json.Marshal(user)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, body)
+}
+
+func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
+	id := uuid.NewString()
+
+	var user model.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		respondWithError(w, http.StatusUnprocessableEntity, err)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	user.Id = id
+
+	dto := model.DTOFromUser(user)
+	id, err := h.storage.CreateUser(dto)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	type response struct {
+		Msg string `json:"message"`
+	}
+	resp := response{Msg: "user created with id: " + id}
+
+	body, err := json.Marshal(resp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, body)
+}
+
+func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if vars["id"] == "" {
+		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
+		return
+	}
+
+	var user model.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		respondWithError(w, http.StatusUnprocessableEntity, err)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	dto := dbmodel.UserDTO{}
+	if user.Username != "" {
+		dto.Username = user.Username
+	}
+	if user.Password != "" {
+		dto.Password = user.Password
+	}
+	if user.Role != "" {
+		dto.Role = user.Role
+	}
+
+	err := h.storage.UpdateUser(dto)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	type response struct {
+		Msg string `json:"message"`
+	}
+	resp := response{Msg: "user updated"}
+
+	body, err := json.Marshal(resp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, body)
+}
+
+func (h *usersHandler) deleteUserByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if vars["id"] == "" {
+		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
+		return
+	}
+
+	err := h.storage.DeleteUserByID(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	type response struct {
+		Msg string `json:"message"`
+	}
+	resp := response{Msg: "user deleted"}
+
+	body, err := json.Marshal(resp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, body)
+}
