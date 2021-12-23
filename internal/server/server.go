@@ -8,7 +8,7 @@ import (
 	"github.com/szwedm/cloud-library/internal/storage"
 )
 
-const UUIDRegex string = `^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$`
+const UUIDRegex string = `[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}`
 
 type server struct {
 	router       *mux.Router

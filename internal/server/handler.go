@@ -126,7 +126,9 @@ func (h *booksHandler) updateBook(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	dto := dbmodel.BookDTO{}
+	dto := dbmodel.BookDTO{
+		Id: vars["id"],
+	}
 	if book.Title != "" {
 		dto.Title = book.Title
 	}
@@ -278,7 +280,9 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	dto := dbmodel.UserDTO{}
+	dto := dbmodel.UserDTO{
+		Id: vars["id"],
+	}
 	if user.Username != "" {
 		dto.Username = user.Username
 	}
