@@ -8,6 +8,8 @@ import (
 	"github.com/szwedm/cloud-library/internal/storage"
 )
 
+const UUIDRegex string = `^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$`
+
 type server struct {
 	router       *mux.Router
 	booksHandler *booksHandler
@@ -23,7 +25,11 @@ func NewServer(booksStorage storage.Books, usersStorage storage.Users) *server {
 }
 
 func (s *server) registerBookPaths() {
-	s.router.HandleFunc("/books", s.booksHandler.getBooks)
+	s.router.HandleFunc("/books", s.booksHandler.getBooks).Methods("GET")
+	s.router.HandleFunc("/books", s.booksHandler.createBook).Methods("POST")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.booksHandler.getBookByID).Methods("GET")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.booksHandler.updateBook).Methods("PUT")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.booksHandler.deleteBookByID).Methods("DELETE")
 }
 
 func (s *server) Run() {

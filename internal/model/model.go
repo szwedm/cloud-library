@@ -31,12 +31,32 @@ func BookFromDTO(dto dbmodel.BookDTO) (b Book) {
 	return
 }
 
+func DTOFromBook(book Book) (dto dbmodel.BookDTO) {
+	dto = dbmodel.BookDTO{
+		Id:      book.Id,
+		Title:   book.Title,
+		Author:  book.Author,
+		Subject: book.Subject,
+	}
+	return
+}
+
 func UserFromDTO(dto dbmodel.UserDTO) (u User) {
 	u = User{
 		Id:       dto.Id,
 		Username: dto.Username,
 		Password: dto.Password,
 		Role:     dto.Role,
+	}
+	return
+}
+
+func DTOFromUser(user User) (dto dbmodel.UserDTO) {
+	dto = dbmodel.UserDTO{
+		Id:       user.Id,
+		Username: user.Username,
+		Password: user.Password,
+		Role:     user.Role,
 	}
 	return
 }
