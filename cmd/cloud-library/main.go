@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/szwedm/cloud-library/internal/server"
 	"github.com/szwedm/cloud-library/internal/storage"
 )
 
@@ -14,4 +15,7 @@ func main() {
 	defer db.CloseConnection()
 
 	db.TestConnection()
+
+	srv := server.NewServer(db.NewBooksStorage(), db.NewUsersStorage())
+	srv.Run()
 }
