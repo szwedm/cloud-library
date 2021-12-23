@@ -24,7 +24,7 @@ func (u *users) GetUsers() ([]dbmodel.UserDTO, error) {
 	dtos := make([]dbmodel.UserDTO, 0)
 	for rows.Next() {
 		var dto dbmodel.UserDTO
-		if err := rows.Scan(&dto); err != nil {
+		if err := rows.Scan(&dto.Id, &dto.Username, &dto.Password, &dto.Role); err != nil {
 			return nil, err
 		}
 		dtos = append(dtos, dto)
@@ -37,7 +37,7 @@ func (u *users) GetUserByID(id string) (dbmodel.UserDTO, error) {
 	row := u.db.QueryRow(stmt, id)
 
 	var dto dbmodel.UserDTO
-	err := row.Scan(&dto)
+	err := row.Scan(&dto.Id, &dto.Username, &dto.Password, &dto.Role)
 	if err != nil {
 		return dbmodel.UserDTO{}, err
 	}

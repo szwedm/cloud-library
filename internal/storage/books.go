@@ -24,7 +24,7 @@ func (b *books) GetBooks() ([]dbmodel.BookDTO, error) {
 	dtos := make([]dbmodel.BookDTO, 0)
 	for rows.Next() {
 		var dto dbmodel.BookDTO
-		if err := rows.Scan(&dto); err != nil {
+		if err := rows.Scan(&dto.Id, &dto.Title, &dto.Author, &dto.Subject); err != nil {
 			return nil, err
 		}
 		dtos = append(dtos, dto)
@@ -37,7 +37,7 @@ func (b *books) GetBookByID(id string) (dbmodel.BookDTO, error) {
 	row := b.db.QueryRow(stmt, id)
 
 	var dto dbmodel.BookDTO
-	err := row.Scan(&dto)
+	err := row.Scan(&dto.Id, &dto.Title, &dto.Author, &dto.Subject)
 	if err != nil {
 		return dbmodel.BookDTO{}, err
 	}
