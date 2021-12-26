@@ -1,8 +1,10 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -217,6 +219,10 @@ func (h *usersHandler) getUserByID(w http.ResponseWriter, r *http.Request) {
 
 	dto, err := h.storage.GetUserByID(vars["id"])
 	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, fmt.Errorf("user with id: %s not found, %w", vars["id"], err))
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}

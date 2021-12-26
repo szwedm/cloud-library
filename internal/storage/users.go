@@ -3,7 +3,6 @@ package storage
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/szwedm/cloud-library/internal/dbmodel"
 )
@@ -47,9 +46,6 @@ func (u *users) GetUserByID(id string) (dbmodel.UserDTO, error) {
 	var dto dbmodel.UserDTO
 	err := row.Scan(&dto.Id, &dto.Username, &dto.Password, &dto.Role)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dbmodel.UserDTO{}, fmt.Errorf("user with id: %s does not exist: %w", id, err)
-		}
 		return dbmodel.UserDTO{}, err
 	}
 	return dto, nil

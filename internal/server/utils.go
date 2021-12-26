@@ -13,7 +13,12 @@ func respondWithJSON(w http.ResponseWriter, code int, payload []byte) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, err error) {
-	body, marshalErr := json.Marshal(err)
+	type response struct {
+		Msg string `json:"message"`
+	}
+	resp := response{Msg: err.Error()}
+
+	body, marshalErr := json.Marshal(resp)
 	if marshalErr != nil {
 		fmt.Println("respondWithError: while marshalling", err)
 	}
