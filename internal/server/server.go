@@ -14,6 +14,7 @@ type server struct {
 	router       *mux.Router
 	booksHandler *booksHandler
 	usersHandler *usersHandler
+	authHandler  *authHandler
 }
 
 func NewServer(booksStorage storage.Books, usersStorage storage.Users) *server {
@@ -21,6 +22,7 @@ func NewServer(booksStorage storage.Books, usersStorage storage.Users) *server {
 		router:       mux.NewRouter(),
 		booksHandler: newBooksHandler(booksStorage),
 		usersHandler: newUsersHandler(usersStorage),
+		authHandler:  newAuthHandler(usersStorage),
 	}
 }
 

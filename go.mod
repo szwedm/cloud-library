@@ -9,3 +9,5 @@ require github.com/gorilla/mux v1.8.0
 require github.com/google/uuid v1.3.0
 
 require golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+
+require github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1

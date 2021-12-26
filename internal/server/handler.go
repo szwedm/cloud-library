@@ -29,9 +29,9 @@ func newBooksHandler(b storage.Books) *booksHandler {
 	}
 }
 
-func newUsersHandler(b storage.Users) *usersHandler {
+func newUsersHandler(u storage.Users) *usersHandler {
 	return &usersHandler{
-		storage: b,
+		storage: u,
 	}
 }
 
