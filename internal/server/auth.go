@@ -90,8 +90,7 @@ func (h *authHandler) generateJWT(username, role string) (string, error) {
 
 	tokenString, err := token.SignedString(signingKey)
 	if err != nil {
-		fmt.Errorf("unable to sign JWT: %w", err)
-		return "", err
+		return "", fmt.Errorf("unable to sign JWT: %w", err)
 	}
 	return tokenString, nil
 }
