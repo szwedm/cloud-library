@@ -10,6 +10,7 @@ import (
 	"github.com/szwedm/cloud-library/internal/dbmodel"
 	"github.com/szwedm/cloud-library/internal/model"
 	"github.com/szwedm/cloud-library/internal/storage"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type booksHandler struct {
@@ -242,10 +243,17 @@ func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	user.Id = id
+	user.Password = string(hashedPassword)
 
 	dto := model.DTOFromUser(user)
-	id, err := h.storage.CreateUser(dto)
+	id, err = h.storage.CreateUser(dto)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
@@ -287,7 +295,12 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 		dto.Username = user.Username
 	}
 	if user.Password != "" {
-		dto.Password = user.Password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, err)
+			return
+		}
+		dto.Password = string(hashedPassword)
 	}
 	if user.Role != "" {
 		dto.Role = user.Role
