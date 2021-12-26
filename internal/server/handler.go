@@ -249,6 +249,11 @@ func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if user.Role != model.UserRoleAdministrator && user.Role != model.UserRoleReader {
+		respondWithError(w, http.StatusBadRequest, errors.New("wrong user role"))
+		return
+	}
+
 	if _, err := h.storage.GetUserByUsername(user.Username); err == nil {
 		respondWithError(w, http.StatusConflict, errors.New("username already exists"))
 		return
