@@ -298,16 +298,27 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		respondWithError(w, http.StatusUnprocessableEntity, err)
+		respondWithError(w, http.StatusInternalServerError, err)
 		r.Body.Close()
 		return
 	}
 	defer r.Body.Close()
 
-	dto := dbmodel.UserDTO{
-		Id: vars["id"],
+	dto, err := h.storage.GetUserByID(vars["id"])
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, fmt.Errorf("user with id: %s not found, %w", vars["id"], err))
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
 	}
+
 	if user.Username != "" {
+		if _, err := h.storage.GetUserByUsername(user.Username); err == nil {
+			respondWithError(w, http.StatusConflict, errors.New("username already exists"))
+			return
+		}
 		dto.Username = user.Username
 	}
 	if user.Password != "" {
@@ -322,7 +333,7 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 		dto.Role = user.Role
 	}
 
-	err := h.storage.UpdateUser(dto)
+	err = h.storage.UpdateUser(dto)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
