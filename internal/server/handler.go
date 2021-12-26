@@ -243,6 +243,11 @@ func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if _, err := h.storage.GetUserByUsername(user.Username); err == nil {
+		respondWithError(w, http.StatusConflict, errors.New("username already exists"))
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)

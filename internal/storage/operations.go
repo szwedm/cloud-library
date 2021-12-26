@@ -13,6 +13,7 @@ type Books interface {
 type Users interface {
 	GetUsers() ([]dbmodel.UserDTO, error)
 	GetUserByID(id string) (dbmodel.UserDTO, error)
+	GetUserByUsername(username string) (dbmodel.UserDTO, error)
 	CreateUser(dto dbmodel.UserDTO) (string, error)
 	UpdateUser(dto dbmodel.UserDTO) error
 	DeleteUserByID(id string) error

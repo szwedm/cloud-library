@@ -2,11 +2,19 @@ package storage
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/szwedm/cloud-library/internal/dbmodel"
 )
 
 const UsersTable = "users"
+
+type UserNotFoundErr struct{}
+
+func (e *UserNotFoundErr) Error() string {
+	return "user not found"
+}
 
 type users struct {
 	db *sql.DB
@@ -39,6 +47,24 @@ func (u *users) GetUserByID(id string) (dbmodel.UserDTO, error) {
 	var dto dbmodel.UserDTO
 	err := row.Scan(&dto.Id, &dto.Username, &dto.Password, &dto.Role)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dbmodel.UserDTO{}, fmt.Errorf("user with id: %s does not exist: %w", id, err)
+		}
+		return dbmodel.UserDTO{}, err
+	}
+	return dto, nil
+}
+
+func (u *users) GetUserByUsername(username string) (dbmodel.UserDTO, error) {
+	stmt := "SELECT * FROM " + UsersTable + " WHERE username=$1"
+	row := u.db.QueryRow(stmt, username)
+
+	var dto dbmodel.UserDTO
+	err := row.Scan(&dto.Id, &dto.Username, &dto.Password, &dto.Role)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dbmodel.UserDTO{}, &UserNotFoundErr{}
+		}
 		return dbmodel.UserDTO{}, err
 	}
 	return dto, nil
