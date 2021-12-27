@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -14,6 +16,8 @@ import (
 	"github.com/szwedm/cloud-library/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const MaxBookFileSize int64 = 10 << 20
 
 type booksHandler struct {
 	storage storage.Books
@@ -81,20 +85,61 @@ func (h *booksHandler) getBookByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *booksHandler) createBook(w http.ResponseWriter, r *http.Request) {
-	id := uuid.NewString()
-
-	var book model.Book
-	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
-		respondWithError(w, http.StatusUnprocessableEntity, err)
-		r.Body.Close()
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBookFileSize)
+	err := r.ParseMultipartForm(MaxBookFileSize)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	defer r.Body.Close()
 
-	book.Id = id
+	id := uuid.NewString()
+	dto := dbmodel.BookDTO{
+		Id:      id,
+		Title:   r.PostFormValue("title"),
+		Author:  r.PostFormValue("author"),
+		Subject: r.PostFormValue("subject"),
+	}
 
-	dto := model.DTOFromBook(book)
-	id, err := h.storage.CreateBook(dto)
+	file, _, err := r.FormFile("bookFile")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer file.Close()
+
+	buff := make([]byte, 512)
+	_, err = file.Read(buff)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	fileType := http.DetectContentType(buff)
+	if fileType != "application/pdf" {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("only pdf files are supported, %w", err))
+		return
+	}
+
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	dst, err := os.Create(fmt.Sprintf("%s/%s.pdf", os.Getenv("APP_BOOKS_STORAGE_PATH"), id))
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, file)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = h.storage.CreateBook(dto)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
