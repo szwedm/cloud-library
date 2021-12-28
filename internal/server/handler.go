@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/szwedm/cloud-library/internal/dbmodel"
@@ -85,6 +86,12 @@ func (h *booksHandler) getBookByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *booksHandler) createBook(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBookFileSize)
 	err := r.ParseMultipartForm(MaxBookFileSize)
 	if err != nil {
@@ -160,6 +167,12 @@ func (h *booksHandler) createBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *booksHandler) updateBook(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("book id is required"))
@@ -208,6 +221,12 @@ func (h *booksHandler) updateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *booksHandler) deleteBookByID(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("book id is required"))
@@ -235,6 +254,12 @@ func (h *booksHandler) deleteBookByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *usersHandler) getUsers(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	dtos, err := h.storage.GetUsers()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
@@ -256,6 +281,12 @@ func (h *usersHandler) getUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *usersHandler) getUserByID(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
@@ -335,6 +366,12 @@ func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
@@ -399,6 +436,12 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *usersHandler) deleteUserByID(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
