@@ -42,7 +42,7 @@ func (s *server) registerBookPaths() {
 
 func (s *server) registerUserPaths() {
 	s.router.HandleFunc("/users", s.middleware(s.usersHandler.getUsers)).Methods("GET")
-	s.router.HandleFunc("/users", s.middleware(s.usersHandler.createUser)).Methods("POST")
+	s.router.HandleFunc("/users", s.usersHandler.createUser).Methods("POST")
 	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.getUserByID)).Methods("GET")
 	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.updateUser)).Methods("PUT")
 	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.deleteUserByID)).Methods("DELETE")
