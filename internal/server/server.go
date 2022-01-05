@@ -33,23 +33,23 @@ func NewServer(booksStorage storage.Books, usersStorage storage.Users) *server {
 }
 
 func (s *server) registerBookPaths() {
-	s.router.HandleFunc("/books", s.middleware(s.booksHandler.getBooks)).Methods("GET")
-	s.router.HandleFunc("/books", s.middleware(s.booksHandler.createBook)).Methods("POST")
-	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.middleware(s.booksHandler.getBookByID)).Methods("GET")
-	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.middleware(s.booksHandler.updateBook)).Methods("PUT")
-	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.middleware(s.booksHandler.deleteBookByID)).Methods("DELETE")
+	s.router.HandleFunc("/books", s.corsMiddleware(s.middleware(s.booksHandler.getBooks))).Methods("GET", "OPTIONS")
+	s.router.HandleFunc("/books", s.corsMiddleware(s.middleware(s.booksHandler.createBook))).Methods("POST", "OPTIONS")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.booksHandler.getBookByID))).Methods("GET", "OPTIONS")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.booksHandler.updateBook))).Methods("PUT", "OPTIONS")
+	s.router.HandleFunc("/books/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.booksHandler.deleteBookByID))).Methods("DELETE", "OPTIONS")
 }
 
 func (s *server) registerUserPaths() {
-	s.router.HandleFunc("/users", s.middleware(s.usersHandler.getUsers)).Methods("GET")
-	s.router.HandleFunc("/users", s.usersHandler.createUser).Methods("POST")
-	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.getUserByID)).Methods("GET")
-	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.updateUser)).Methods("PUT")
-	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.middleware(s.usersHandler.deleteUserByID)).Methods("DELETE")
+	s.router.HandleFunc("/users", s.corsMiddleware(s.middleware(s.usersHandler.getUsers))).Methods("GET", "OPTIONS")
+	s.router.HandleFunc("/users", s.corsMiddleware(s.usersHandler.createUser)).Methods("POST", "OPTIONS")
+	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.usersHandler.getUserByID))).Methods("GET", "OPTIONS")
+	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.usersHandler.updateUser))).Methods("PUT", "OPTIONS")
+	s.router.HandleFunc("/users/{id:"+UUIDRegex+"}", s.corsMiddleware(s.middleware(s.usersHandler.deleteUserByID))).Methods("DELETE", "OPTIONS")
 }
 
 func (s *server) registerAuthPaths() {
-	s.router.HandleFunc("/signin", s.authHandler.signin).Methods("POST")
+	s.router.HandleFunc("/signin", s.corsMiddleware(s.authHandler.signin)).Methods("POST", "OPTIONS")
 }
 
 func (s *server) middleware(next http.HandlerFunc) http.HandlerFunc {
@@ -79,6 +79,22 @@ func (s *server) middleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+	}
+}
+
+func (s *server) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	}
 }
 
