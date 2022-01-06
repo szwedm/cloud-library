@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/uuid"
@@ -62,27 +64,37 @@ func (h *booksHandler) getBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *booksHandler) getBookByID(w http.ResponseWriter, r *http.Request) {
+	props, _ := r.Context().Value("props").(jwt.MapClaims)
+	if props["role"] != model.UserRoleAdministrator && props["role"] != model.UserRoleReader {
+		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("book id is required"))
 		return
 	}
 
-	dto, err := h.storage.GetBookByID(vars["id"])
+	filePath := filepath.Clean(os.Getenv("APP_BOOKS_STORAGE_PATH") + string(os.PathSeparator) + vars["id"] + ".pdf")
+	requestedFile, err := os.Open(filePath)
 	if err != nil {
+		respondWithError(w, http.StatusNotFound, err)
+		return
+	}
+	defer requestedFile.Close()
+
+	fileInfo, _ := requestedFile.Stat()
+	fileSize := fileInfo.Size()
+
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Length", strconv.FormatInt(fileSize, 10))
+
+	if _, err = io.Copy(w, requestedFile); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-
-	book := model.BookFromDTO(dto)
-
-	body, err := json.Marshal(book)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, body)
 }
 
 func (h *booksHandler) createBook(w http.ResponseWriter, r *http.Request) {
