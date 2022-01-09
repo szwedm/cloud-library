@@ -245,6 +245,12 @@ func (h *booksHandler) deleteBookByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filePath := filepath.Clean(os.Getenv("APP_BOOKS_STORAGE_PATH") + string(os.PathSeparator) + vars["id"] + ".pdf")
+	if err := os.Remove(filePath); err != nil {
+		respondWithError(w, http.StatusNotFound, err)
+		return
+	}
+
 	err := h.storage.DeleteBookByID(vars["id"])
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
