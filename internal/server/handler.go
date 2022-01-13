@@ -300,7 +300,7 @@ func (h *usersHandler) getUsers(w http.ResponseWriter, r *http.Request) {
 
 func (h *usersHandler) getUserByID(w http.ResponseWriter, r *http.Request) {
 	props, _ := r.Context().Value("props").(jwt.MapClaims)
-	if props["role"] != model.UserRoleAdministrator {
+	if props["role"] != model.UserRoleAdministrator && props["role"] != model.UserRoleReader {
 		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
@@ -309,6 +309,13 @@ func (h *usersHandler) getUserByID(w http.ResponseWriter, r *http.Request) {
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
 		return
+	}
+
+	if props["role"] == model.UserRoleReader {
+		if userIdJWT := props["id"]; userIdJWT != vars["id"] {
+			respondWithError(w, http.StatusForbidden, errors.New("user id mismatch"))
+			return
+		}
 	}
 
 	dto, err := h.storage.GetUserByID(vars["id"])
@@ -385,7 +392,7 @@ func (h *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	props, _ := r.Context().Value("props").(jwt.MapClaims)
-	if props["role"] != model.UserRoleAdministrator {
+	if props["role"] != model.UserRoleAdministrator && props["role"] != model.UserRoleReader {
 		respondWithError(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
@@ -394,6 +401,13 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	if vars["id"] == "" {
 		respondWithError(w, http.StatusBadRequest, errors.New("user id is required"))
 		return
+	}
+
+	if props["role"] == model.UserRoleReader {
+		if userIdJWT := props["id"]; userIdJWT != vars["id"] {
+			respondWithError(w, http.StatusForbidden, errors.New("user id mismatch"))
+			return
+		}
 	}
 
 	var user model.User
@@ -416,8 +430,10 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	if user.Username != "" {
 		if _, err := h.storage.GetUserByUsername(user.Username); err == nil {
-			respondWithError(w, http.StatusConflict, errors.New("username already exists"))
-			return
+			if props["username"] != user.Username {
+				respondWithError(w, http.StatusConflict, errors.New("username already exists"))
+				return
+			}
 		}
 		dto.Username = user.Username
 	}
@@ -430,7 +446,12 @@ func (h *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 		dto.Password = string(hashedPassword)
 	}
 	if user.Role != "" {
-		dto.Role = user.Role
+		if props["role"] == model.UserRoleAdministrator {
+			dto.Role = user.Role
+		} else {
+			dto.Role = model.UserRoleReader
+		}
+
 	}
 
 	err = h.storage.UpdateUser(dto)
