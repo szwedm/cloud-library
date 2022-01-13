@@ -18,6 +18,7 @@ type authentication struct {
 }
 
 type token struct {
+	Id       string `json:"id"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
 	Token    string `json:"token"`
@@ -57,13 +58,14 @@ func (h *authHandler) signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validToken, err := h.generateJWT(dto.Username, dto.Role)
+	validToken, err := h.generateJWT(dto.Id, dto.Username, dto.Role)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	token := token{
+		Id:       dto.Id,
 		Username: dto.Username,
 		Role:     dto.Role,
 		Token:    validToken,
@@ -78,14 +80,15 @@ func (h *authHandler) signin(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, body)
 }
 
-func (h *authHandler) generateJWT(username, role string) (string, error) {
+func (h *authHandler) generateJWT(id, username, role string) (string, error) {
 	signingKey := []byte(os.Getenv("APP_JWT_SIGN_KEY"))
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	claims["authorized"] = true
+	claims["id"] = id
 	claims["username"] = username
 	claims["role"] = role
+	claims["authorized"] = true
 	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 
 	tokenString, err := token.SignedString(signingKey)
